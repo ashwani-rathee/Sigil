@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-H0NW5Z2MYC');
+  </script>
+  <title>Digit Recognition WebApp</title>
+  <meta name="description" content="Simple Machine Learning Model into an WebApp using Flux.jl">
+  <meta name="keywords" content="Machine Learning, Flux.jl">
+  <meta name="author" content="Ashwani Rathee">
+  <style>
+    body {
+      touch-action: none;
+      /*https://developer.mozilla.org/en-US/docs/Web/CSS/touch-action*/
+      font-family: "Roboto";
+      background-color: aliceblue;
+      margin: 0px;
+    }
+
+    h1 {
+      /*margin: 20px;*/
+      padding: 10px;
+      font-size: 30px;
+      text-align: center;
+      color: white;
+      background-color: black;
+      border: 1px solid black;
+      border-radius: 10px;
+
+    }
+
+    h2 {
+      background-color: black;
+      color: white;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+
+    #paint {
+      border: 3px solid black;
+      /*padding-top: 200px;*/
+      margin: auto;
+      border-radius: 10px;
+    }
+
+    #predicted {
+      padding: auto;
+      font-size: 30px;
+      /*margin-bottom: 200px;*/
+      text-align: center;
+      border-radius: 10px;
+    }
+
+    #number {
+      border: 3px solid black;
+      margin: auto;
+      margin-top: 40px;
+      margin-bottom: 10px;
+      margin-right: auto;
+      margin-left: auto;
+      padding: auto;
+      text-align: center;
+      vertical-align: middle;
+      border-radius: 10px;
+    }
+
+    #clear {
+      /*margin: auto;*/
+      font-size: 10px;
+      margin-top: 70px;
+      padding-right: 20px;
+      padding-left: 20px;
+      text-align: center;
+    }
+
+    .parent {
+      display: flex;
+      flex-direction: row;
+    }
+
+    .column {
+      flex: 1 1 0px;
+      border: 1px solid black;
+      margin-bottom: 25px;
+      margin-top: 25px;
+      padding: 40px;
+      /*margin:  auto;*/
+      text-align: center;
+      font-size: 30px;
+      /*height: 100%;*/
+      /*border-radius: 10px;*/
+
+    }
+
+    .classname {
+      position: fixed;
+      /*        left: 10px;  
+        bottom: 5px;  
+        right: 10px;   */
+      width: 100%;
+      background-color: gray;
+      color: white;
+      text-align: center;
+    }
+
+    a:link {color: lightblue;}  
+    a:visited {color: #060235}  
+    a:hover {color: #FCFC0C}  
+    a:active {color: #C0F0FC}  
+  </style>
+</head>
+
+<body>
+  <script src="https://code.jquery.com/jquery-2.2.4.min.js"></script>
+  <h2>Flux.jl Digit Recognition</h2>
+
+
+  <div class="parent">
+    <div class="column">
+      Draw inside the canvas!!
+      <div id="paint">
+
+        <canvas id="myCanvas"></canvas>
+      </div>
+    </div>
+
+    <div class="column">
+      <div id="predicted">
+        Recognized digit
+        <div id="number"></div>
+        <button id="clear">clear</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="classname">
+    <h2><a href="https://github.com/ashwani-rathee/Sigil">Github(files)    </a> | <a href="url">   Youtube Video   </a> | <a href="url">   Dev.to(post)   </a> </h2>
+  </div>
+  <script>
+    var isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    if (isMobile) {
+      $('#paint').css({ 'width': '60%' });
+      $('#number').css({ 'width': '30%', 'font-size': '240px' });
+      $('#clear').css({ 'font-size': '50px' });
+    } else {
+      $('#paint').css({ 'width': '300px' });
+      $('#number').css({ 'width': '150px', 'font-size': '120px' });
+      $('#clear').css({ 'font-size': '35px' });
+    }
+
+    var cw = $('#paint').width();
+    $('#paint').css({ 'height': cw + 'px' });
+
+    cw = $('#number').width();
+    $('#number').css({ 'height': cw + 'px' });
+    var canvas = document.getElementById('myCanvas');
+    var context = canvas.getContext('2d');
+
+    var compuetedStyle = getComputedStyle(document.getElementById('paint'));
+    canvas.width = parseInt(compuetedStyle.getPropertyValue('width'));
+    canvas.height = parseInt(compuetedStyle.getPropertyValue('height'));
+
+    var mouse = { x: 0, y: 0 };
+
+    canvas.addEventListener('mousemove', function (e) {
+      mouse.x = e.pageX - this.offsetLeft;
+      mouse.y = e.pageY - this.offsetTop;
+    }, false);
+
+    context.lineWidth = isMobile ? 60 : 25;
+    context.lineJoin = 'round';
+    context.lineCap = 'round';
+    context.strokeStyle = '#0000FF';
+
+    canvas.addEventListener('mousedown', function (e) {
+      context.moveTo(mouse.x, mouse.y);
+      context.beginPath();
+      canvas.addEventListener('mousemove', onPaint, false);
+    }, false);
+
+    canvas.addEventListener('mouseup', function () {
+      $('#number').html('<img id="spinner" width="100" height="100" src="spinner.gif"/>');
+      canvas.removeEventListener('mousemove', onPaint, false);
+      var img = new Image();
+      img.onload = function () {
+        context.drawImage(img, 0, 0, 28, 28);
+        data = context.getImageData(0, 0, 28, 28).data;
+        var input = [];
+        for (var i = 0; i < data.length; i += 4) {
+          input.push(data[i + 2] / 255);
+        }
+        predict(input);
+      };
+      img.src = canvas.toDataURL('image/png');
+    }, false);
+
+    var onPaint = function () {
+      context.lineTo(mouse.x, mouse.y);
+      context.stroke();
+    };
+
+    canvas.addEventListener('touchstart', function (e) {
+      var touch = e.touches[0];
+      canvas.dispatchEvent(new MouseEvent('mousedown', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      }));
+    }, false);
+    canvas.addEventListener('touchend', function (e) {
+      canvas.dispatchEvent(new MouseEvent('mouseup', {}));
+    }, false);
+    canvas.addEventListener('touchmove', function (e) {
+      var touch = e.touches[0];
+      canvas.dispatchEvent(new MouseEvent('mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+      }));
+    }, false);
+
+    var predict = function (input) {
+      // console.log(input.toString());///
+      $.ajax({
+        url: 'https://digitreg.herokuapp.com/digitreg',
+        type: 'post',
+        dataType: 'json',
+        contentType: 'application/json',
+        success: function (data) {
+          // console.log(data)
+          $('#number').html(data);
+        },
+        data: JSON.stringify(input)
+      });
+    }
+
+    $('#clear').click(function () {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      $('#number').html('');
+    });
+  </script>
+</body>
+
+</html>
