@@ -24,8 +24,8 @@ docs/site/
 Manifest.toml
 
 sardor/
-objecttracking/datasets/
-objecttracking/opicalflows/
+object_tracking/datasets/
+object_tracking/opicalflows/
 
 minecraft_artcomposer/block_textures/
 minecraft_artcomposer/block_textures_117/
